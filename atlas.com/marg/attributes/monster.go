@@ -15,8 +15,8 @@ type MonsterData struct {
 }
 
 type MonsterAttributes struct {
-	WorldId            int            `json:"worldId"`
-	ChannelId          int            `json:"channelId"`
+	WorldId            byte            `json:"worldId"`
+	ChannelId          byte            `json:"channelId"`
 	MapId              int             `json:"mapId"`
 	MonsterId          int             `json:"monsterId"`
 	ControlCharacterId int             `json:"controlCharacterId"`

@@ -46,11 +46,13 @@ func respawn(l *log.Logger, worldId byte, channelId byte, mapId int) {
 			}
 
 			monstersMax := getMonsterMax(c, len(ableSps))
-			if monstersMax-monstersInMap > 0 {
+
+			toSpawn := monstersMax-monstersInMap
+			if toSpawn > 0 {
 				rand.Seed(time.Now().UnixNano())
 
-				dest := make([]models.MonsterSpawnPoint, len(ableSps))
-				perm := rand.Perm(len(ableSps))
+				dest := make([]models.MonsterSpawnPoint, toSpawn)
+				perm := rand.Perm(toSpawn)
 				for i, v := range perm {
 					//goland:noinspection GoNilness
 					dest[v] = ableSps[i]
