@@ -47,23 +47,27 @@ func respawn(l *log.Logger, worldId byte, channelId byte, mapId int) {
 
 			monstersMax := getMonsterMax(c, len(ableSps))
 
-			toSpawn := monstersMax-monstersInMap
+			toSpawn := monstersMax - monstersInMap
 			if toSpawn > 0 {
-				rand.Seed(time.Now().UnixNano())
+				result := shuffle(ableSps)
 
-				dest := make([]models.MonsterSpawnPoint, toSpawn)
-				perm := rand.Perm(toSpawn)
-				for i, v := range perm {
-					//goland:noinspection GoNilness
-					dest[v] = ableSps[i]
-				}
-
-				for _, x := range dest {
+				for i := 0; i < toSpawn; i++ {
+					x := result[i]
 					processor.NewMonster(l).CreateMonster(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
 				}
 			}
 		}
 	}
+}
+
+func shuffle(vals []models.MonsterSpawnPoint) []models.MonsterSpawnPoint {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	ret := make([]models.MonsterSpawnPoint, len(vals))
+	perm := r.Perm(len(vals))
+	for i, randIndex := range perm {
+		ret[i] = vals[randIndex]
+	}
+	return ret
 }
 
 func getMonsterMax(characterCount int, spawnPointCount int) int {
