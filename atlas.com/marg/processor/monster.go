@@ -1,33 +1,33 @@
 package processor
 
 import (
-	"atlas-marg/attributes"
+	"atlas-marg/rest/attributes"
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type Monster struct {
-	l *log.Logger
+	l logrus.FieldLogger
 }
 
-func NewMonster(l *log.Logger) *Monster {
+func NewMonster(l logrus.FieldLogger) *Monster {
 	return &Monster{l}
 }
 
 func (m *Monster) CountInMap(worldId byte, channelId byte, mapId int) (int, error) {
 	r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId))
 	if err != nil {
-		m.l.Printf("[ERROR] retrieving monster data for map %d", mapId)
+		m.l.WithError(err).Errorf("Retrieving monster data for map %d", mapId)
 		return 0, err
 	}
 
 	td := &attributes.MonsterListDataContainer{}
 	err = attributes.FromJSON(td, r.Body)
 	if err != nil {
-		m.l.Printf("[ERROR] decoding monster data for map %d", mapId)
+		m.l.WithError(err).Errorf("Decoding monster data for map %d", mapId)
 		return 0, err
 	}
 	return len(td.Data), nil
@@ -49,12 +49,12 @@ func (m *Monster) CreateMonster(worldId byte, channelId byte, mapId int, monster
 	}
 	jsonReq, err := json.Marshal(monster)
 	if err != nil {
-		m.l.Fatal("[ERROR] marshalling monster")
+		m.l.WithError(err).Errorf("Marshalling monster")
 	}
 
 	_, err = http.Post(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId),
 		"application/json; charset=utf-8", bytes.NewBuffer(jsonReq))
 	if err != nil {
-		m.l.Printf("[ERROR] creating monster for map %d", mapId)
+		m.l.WithError(err).Errorf("Creating monster for map %d", mapId)
 	}
 }

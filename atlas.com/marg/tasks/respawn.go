@@ -1,60 +1,63 @@
 package tasks
 
 import (
+	"atlas-marg/map"
 	"atlas-marg/models"
 	"atlas-marg/processor"
 	"atlas-marg/registries"
-	"log"
+	"github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
 	"time"
 )
 
 type Respawn struct {
-	l        *log.Logger
+	l        logrus.FieldLogger
 	interval int
 }
 
-func NewRespawn(l *log.Logger, interval int) *Respawn {
+func NewRespawn(l logrus.FieldLogger, interval int) *Respawn {
 	return &Respawn{l, interval}
 }
 
 func (r *Respawn) Run() {
 	mks := registries.GetMapCharacterRegistry().GetMapsWithCharacters()
 	for _, mk := range mks {
-		go func(l *log.Logger, mk models.MapKey) {
+		go func(l logrus.FieldLogger, mk models.MapKey) {
 			respawn(l, mk.WorldId, mk.ChannelId, mk.MapId)
 		}(r.l, mk)
 	}
 }
 
-func respawn(l *log.Logger, worldId byte, channelId byte, mapId int) {
+func respawn(l logrus.FieldLogger, worldId byte, channelId byte, mapId int) {
 	c := len(registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId))
 	if c > 0 {
-		sps, err := processor.NewMap(l).GetMonsterSpawnPoints(mapId)
-		if err == nil {
-			var ableSps []models.MonsterSpawnPoint
-			for _, x := range sps {
-				if x.MobTime >= 0 {
-					ableSps = append(ableSps, x)
-				}
+		sps, err := _map.NewMap(l).GetMonsterSpawnPoints(mapId)
+		if err != nil {
+			l.WithError(err).Errorf("Unable to get spawn points for map %d.", mapId)
+			return
+		}
+
+		var ableSps []models.MonsterSpawnPoint
+		for _, x := range sps {
+			if x.MobTime >= 0 {
+				ableSps = append(ableSps, x)
 			}
+		}
 
-			monstersInMap, err := processor.NewMonster(l).CountInMap(worldId, channelId, mapId)
-			if err != nil {
-				l.Print("Assuming no monsters in map.")
-			}
+		monstersInMap, err := processor.NewMonster(l).CountInMap(worldId, channelId, mapId)
+		if err != nil {
+			l.WithError(err).Warnf("Assuming no monsters in map.")
+		}
 
-			monstersMax := getMonsterMax(c, len(ableSps))
+		monstersMax := getMonsterMax(c, len(ableSps))
 
-			toSpawn := monstersMax - monstersInMap
-			if toSpawn > 0 {
-				result := shuffle(ableSps)
-
-				for i := 0; i < toSpawn; i++ {
-					x := result[i]
-					processor.NewMonster(l).CreateMonster(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
-				}
+		toSpawn := monstersMax - monstersInMap
+		if toSpawn > 0 {
+			result := shuffle(ableSps)
+			for i := 0; i < toSpawn; i++ {
+				x := result[i]
+				processor.NewMonster(l).CreateMonster(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
 			}
 		}
 	}

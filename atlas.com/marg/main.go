@@ -2,49 +2,34 @@ package main
 
 import (
 	"atlas-marg/configurations"
-	"atlas-marg/consumers"
-	"atlas-marg/handlers"
+	"atlas-marg/kafka/consumers"
+	"atlas-marg/logger"
+	"atlas-marg/rest"
 	"atlas-marg/tasks"
-	"context"
-	"github.com/go-openapi/runtime/middleware"
-	"github.com/gorilla/mux"
-	"log"
-	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
-	l := log.New(os.Stdout, "marg ", log.LstdFlags | log.Lmicroseconds)
-	c, err := configurations.NewConfigurator(l).GetConfiguration()
+	l := logger.CreateLogger()
+
+	config, err := configurations.NewConfigurator(l).GetConfiguration()
 	if err != nil {
-		l.Fatal("[ERROR] Retrieving the service configuration")
+		l.WithError(err).Fatalf("Retrieving the service configuration.")
 	}
 
-	go consumers.NewMapChanged(l, context.Background()).Init()
-	go consumers.NewCharacterStatus(l, context.Background()).Init()
+	consumers.CreateEventConsumers(l)
 
-	go tasks.Register(tasks.NewRespawn(l, c.RespawnInterval))
+	go tasks.Register(tasks.NewRespawn(l, config.RespawnInterval))
 
-	handleRequests(l)
-}
+	rest.CreateRestService(l)
 
-func handleRequests(l *log.Logger) {
-	//TODO this needs to be updated
-	router := mux.NewRouter().StrictSlash(true).PathPrefix("/ms/mrg").Subrouter()
-	router.Use(commonHeader)
-	router.Handle("/docs", middleware.Redoc(middleware.RedocOpts{BasePath: "/ms/mrg", SpecURL: "/ms/mrg/swagger.yaml"}, nil))
-	router.Handle("/swagger.yaml", http.StripPrefix("/ms/mrg", http.FileServer(http.Dir("/"))))
+	// trap sigterm or interrupt and gracefully shutdown the server
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, os.Kill, syscall.SIGTERM)
 
-	m := handlers.NewMap(l)
-	mRouter := router.PathPrefix("/worlds").Subrouter()
-	mRouter.HandleFunc("/{worldId}/channels/{channelId}/maps/{mapId}/characters", m.GetMapCharacters).Methods("GET")
-
-	l.Fatal(http.ListenAndServe(":8080", router))
-}
-
-func commonHeader(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Add("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
+	// Block until a signal is received.
+	sig := <-c
+	l.Infoln("Shutting down via signal:", sig)
 }

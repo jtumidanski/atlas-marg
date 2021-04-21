@@ -1,32 +1,32 @@
-package processor
+package _map
 
 import (
-	"atlas-marg/attributes"
 	"atlas-marg/models"
+	"atlas-marg/rest/attributes"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
 type Map struct {
-	l *log.Logger
+	l logrus.FieldLogger
 }
 
-func NewMap(l *log.Logger) *Map {
+func NewMap(l logrus.FieldLogger) *Map {
 	return &Map{l}
 }
 
 func (c *Map) GetMonsterSpawnPoints(mapId int) ([]models.MonsterSpawnPoint, error) {
 	r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/mis/maps/%d/monsters", mapId))
 	if err != nil {
-		c.l.Printf("[ERROR] retrieving monster spawn data for map %d", mapId)
+		c.l.WithError(err).Errorf("Retrieving monster spawn data for map %d", mapId)
 		return nil, err
 	}
 
 	td := &attributes.MonsterInformationListDataContainer{}
 	err = attributes.FromJSON(td, r.Body)
 	if err != nil {
-		c.l.Printf("[ERROR] decoding monster spawn data for map %d", mapId)
+		c.l.WithError(err).Errorf("Decoding monster spawn data for map %d", mapId)
 		return nil, err
 	}
 

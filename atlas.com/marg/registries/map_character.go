@@ -120,7 +120,7 @@ func (r *MapCharacterRegistry) GetMapForCharacter(characterId int) (int, error) 
 	if mk, ok := r.characterMap[characterId]; ok {
 		return mk.MapId, nil
 	}
-	return 0, errors.New("[WARNING] character not found")
+	return 0, errors.New("character not found")
 }
 
 func (r *MapCharacterRegistry) GetCharactersInMap(worldId byte, channelId byte, mapId int) []int {
