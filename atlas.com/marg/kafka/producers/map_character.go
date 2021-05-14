@@ -1,7 +1,6 @@
 package producers
 
 import (
-	"context"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,24 +12,18 @@ type mapCharacterEvent struct {
 	Type        string `json:"type"`
 }
 
-type MapCharacter struct {
-	l   logrus.FieldLogger
-	ctx context.Context
+func EnterMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, characterId int) {
+	producer := ProduceEvent(l, "TOPIC_MAP_CHARACTER_EVENT")
+	return func(worldId byte, channelId byte, mapId int, characterId int) {
+		e := &mapCharacterEvent{WorldId: worldId, ChannelId: channelId, MapId: mapId, CharacterId: characterId, Type: "ENTER"}
+		producer(CreateKey(mapId), e)
+	}
 }
 
-func NewMapCharacter(l logrus.FieldLogger, ctx context.Context) *MapCharacter {
-	return &MapCharacter{l, ctx}
-}
-
-func (m *MapCharacter) EmitEnter(worldId byte, channelId byte, mapId int, characterId int) {
-	m.emit(worldId, channelId, mapId, characterId, "ENTER")
-}
-
-func (m *MapCharacter) EmitExit(worldId byte, channelId byte, mapId int, characterId int) {
-	m.emit(worldId, channelId, mapId, characterId, "EXIT")
-}
-
-func (m *MapCharacter) emit(worldId byte, channelId byte, mapId int, characterId int, theType string) {
-	e := &mapCharacterEvent{WorldId: worldId, ChannelId: channelId, MapId: mapId, CharacterId: characterId, Type: theType}
-	produceEvent(m.l, "TOPIC_MAP_CHARACTER_EVENT", createKey(mapId), e)
+func ExitMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, characterId int) {
+	producer := ProduceEvent(l, "TOPIC_MAP_CHARACTER_EVENT")
+	return func(worldId byte, channelId byte, mapId int, characterId int) {
+		e := &mapCharacterEvent{WorldId: worldId, ChannelId: channelId, MapId: mapId, CharacterId: characterId, Type: "EXIT"}
+		producer(CreateKey(mapId), e)
+	}
 }

@@ -9,52 +9,48 @@ import (
 	"net/http"
 )
 
-type Monster struct {
-	l logrus.FieldLogger
-}
+func CountInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int) (int, error) {
+	return func(worldId byte, channelId byte, mapId int) (int, error) {
+		r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId))
+		if err != nil {
+			l.WithError(err).Errorf("Retrieving monster data for map %d", mapId)
+			return 0, err
+		}
 
-func NewMonster(l logrus.FieldLogger) *Monster {
-	return &Monster{l}
-}
-
-func (m *Monster) CountInMap(worldId byte, channelId byte, mapId int) (int, error) {
-	r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId))
-	if err != nil {
-		m.l.WithError(err).Errorf("Retrieving monster data for map %d", mapId)
-		return 0, err
+		td := &attributes.MonsterListDataContainer{}
+		err = attributes.FromJSON(td, r.Body)
+		if err != nil {
+			l.WithError(err).Errorf("Decoding monster data for map %d", mapId)
+			return 0, err
+		}
+		return len(td.Data), nil
 	}
-
-	td := &attributes.MonsterListDataContainer{}
-	err = attributes.FromJSON(td, r.Body)
-	if err != nil {
-		m.l.WithError(err).Errorf("Decoding monster data for map %d", mapId)
-		return 0, err
-	}
-	return len(td.Data), nil
 }
 
-func (m *Monster) CreateMonster(worldId byte, channelId byte, mapId int, monsterId int, x int, y int, fh int, team int) {
-	monster := attributes.MonsterInputDataContainer{
-		Data: attributes.MonsterData{
-			Id:   "0",
-			Type: "com.atlas.morg.rest.attribute.MonsterAttributes",
-			Attributes: attributes.MonsterAttributes{
-				MonsterId: monsterId,
-				X:         x,
-				Y:         y,
-				Team:      team,
-				Fh:        fh,
+func CreateMonster(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, monsterId int, x int, y int, fh int, team int) {
+	return func(worldId byte, channelId byte, mapId int, monsterId int, x int, y int, fh int, team int) {
+		monster := attributes.MonsterInputDataContainer{
+			Data: attributes.MonsterData{
+				Id:   "0",
+				Type: "com.atlas.morg.rest.attribute.MonsterAttributes",
+				Attributes: attributes.MonsterAttributes{
+					MonsterId: monsterId,
+					X:         x,
+					Y:         y,
+					Team:      team,
+					Fh:        fh,
+				},
 			},
-		},
-	}
-	jsonReq, err := json.Marshal(monster)
-	if err != nil {
-		m.l.WithError(err).Errorf("Marshalling monster")
-	}
+		}
+		jsonReq, err := json.Marshal(monster)
+		if err != nil {
+			l.WithError(err).Errorf("Marshalling monster")
+		}
 
-	_, err = http.Post(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId),
-		"application/json; charset=utf-8", bytes.NewBuffer(jsonReq))
-	if err != nil {
-		m.l.WithError(err).Errorf("Creating monster for map %d", mapId)
+		_, err = http.Post(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId),
+			"application/json; charset=utf-8", bytes.NewBuffer(jsonReq))
+		if err != nil {
+			l.WithError(err).Errorf("Creating monster for map %d", mapId)
+		}
 	}
 }
