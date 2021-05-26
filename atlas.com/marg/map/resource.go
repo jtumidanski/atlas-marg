@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-func GetMapCharacters(l *log.Logger) http.HandlerFunc {
+func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
 		var response attributes.MapCharactersListDataContainer
 		response.Data = make([]attributes.MapCharactersData, 0)
