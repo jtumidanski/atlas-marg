@@ -11,15 +11,15 @@ type MonsterInformationData struct {
 }
 
 type MonsterInformationAttributes struct {
-	MonsterId int  `json:"monsterId"`
-	MobTime   int  `json:"mobTime"`
-	Team      int  `json:"team"`
-	Cy        int  `json:"cy"`
-	F         int  `json:"f"`
-	Fh        int  `json:"fh"`
-	Rx0       int  `json:"rx0"`
-	Rx1       int  `json:"rx1"`
-	X         int  `json:"x"`
-	Y         int  `json:"y"`
-	Hide      bool `json:"hide"`
+	Id      uint32 `json:"id"`
+	MobTime uint32 `json:"mob_time"`
+	Team    int32  `json:"team"`
+	CY      int16  `json:"cy"`
+	F       uint32 `json:"f"`
+	FH      uint16 `json:"fh"`
+	RX0     int16  `json:"rx0"`
+	RX1     int16  `json:"rx1"`
+	X       int16  `json:"x"`
+	Y       int16  `json:"y"`
+	Hide    bool   `json:"hide"`
 }

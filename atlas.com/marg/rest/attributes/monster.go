@@ -18,13 +18,13 @@ type MonsterAttributes struct {
 	WorldId            byte            `json:"worldId"`
 	ChannelId          byte            `json:"channelId"`
 	MapId              int             `json:"mapId"`
-	MonsterId          int             `json:"monsterId"`
+	MonsterId          uint32          `json:"monsterId"`
 	ControlCharacterId int             `json:"controlCharacterId"`
-	X                  int             `json:"x"`
-	Y                  int             `json:"y"`
-	Fh                 int             `json:"fh"`
+	X                  int16           `json:"x"`
+	Y                  int16           `json:"y"`
+	Fh                 uint16          `json:"fh"`
 	Stance             int             `json:"stance"`
-	Team               int             `json:"team"`
+	Team               int32           `json:"team"`
 	Hp                 int             `json:"hp"`
 	DamageEntries      []MonsterDamage `json:"damageEntries"`
 }

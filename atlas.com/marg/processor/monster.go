@@ -27,8 +27,8 @@ func CountInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId i
 	}
 }
 
-func CreateMonster(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, monsterId int, x int, y int, fh int, team int) {
-	return func(worldId byte, channelId byte, mapId int, monsterId int, x int, y int, fh int, team int) {
+func CreateMonster(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, monsterId uint32, x int16, y int16, fh uint16, team int32) {
+	return func(worldId byte, channelId byte, mapId int, monsterId uint32, x int16, y int16, fh uint16, team int32) {
 		monster := attributes.MonsterInputDataContainer{
 			Data: attributes.MonsterData{
 				Id:   "0",

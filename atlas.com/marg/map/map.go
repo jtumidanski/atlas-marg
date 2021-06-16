@@ -33,14 +33,14 @@ func (c *Map) GetMonsterSpawnPoints(mapId int) ([]models.MonsterSpawnPoint, erro
 	var result []models.MonsterSpawnPoint
 	for _, x := range td.Data {
 		result = append(result, models.MonsterSpawnPoint{
-			Id:      x.Attributes.MonsterId,
+			Id:      x.Attributes.Id,
 			MobTime: x.Attributes.MobTime,
 			Team:    x.Attributes.Team,
-			Cy:      x.Attributes.Cy,
+			Cy:      x.Attributes.CY,
 			F:       x.Attributes.F,
-			Fh:      x.Attributes.Fh,
-			Rx0:     x.Attributes.Rx0,
-			Rx1:     x.Attributes.Rx1,
+			Fh:      x.Attributes.FH,
+			Rx0:     x.Attributes.RX0,
+			Rx1:     x.Attributes.RX1,
 			X:       x.Attributes.X,
 			Y:       x.Attributes.Y,
 		})
