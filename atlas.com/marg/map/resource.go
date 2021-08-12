@@ -1,8 +1,8 @@
 package _map
 
 import (
+	"atlas-marg/json"
 	"atlas-marg/registries"
-	"atlas-marg/rest/attributes"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -11,8 +11,8 @@ import (
 
 func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		var response attributes.MapCharactersListDataContainer
-		response.Data = make([]attributes.MapCharactersData, 0)
+		var response CharacterDataListContainer
+		response.Data = make([]CharactersDataBody, 0)
 
 		vars := mux.Vars(r)
 		value, err := strconv.Atoi(vars["worldId"])
@@ -46,7 +46,7 @@ func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 			response.Data = append(response.Data, serverData)
 		}
 
-		err = attributes.ToJSON(response, rw)
+		err = json.ToJSON(response, rw)
 		if err != nil {
 			l.WithError(err).Errorf("Error encoding GetChannelServers response")
 			rw.WriteHeader(http.StatusInternalServerError)
@@ -54,10 +54,10 @@ func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 	}
 }
 
-func getMapCharactersResponseObject(id uint32) attributes.MapCharactersData {
-	return attributes.MapCharactersData{
+func getMapCharactersResponseObject(id uint32) CharactersDataBody {
+	return CharactersDataBody{
 		Id:         strconv.Itoa(int(id)),
 		Type:       "com.atlas.mrg.rest.attribute.MapCharacterAttributes",
-		Attributes: attributes.MapCharactersAttributes{},
+		Attributes: CharacterAttributes{},
 	}
 }

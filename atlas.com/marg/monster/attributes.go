@@ -1,20 +1,20 @@
-package attributes
+package monster
 
-type MonsterInputDataContainer struct {
-	Data MonsterData `json:"data"`
+type InputDataContainer struct {
+	Data DataBody `json:"data"`
 }
 
-type MonsterListDataContainer struct {
-	Data []MonsterData `json:"data"`
+type DataListContainer struct {
+	Data []DataBody `json:"data"`
 }
 
-type MonsterData struct {
-	Id         string            `json:"id"`
-	Type       string            `json:"type"`
-	Attributes MonsterAttributes `json:"attributes"`
+type DataBody struct {
+	Id         string     `json:"id"`
+	Type       string     `json:"type"`
+	Attributes Attributes `json:"attributes"`
 }
 
-type MonsterAttributes struct {
+type Attributes struct {
 	WorldId            byte            `json:"worldId"`
 	ChannelId          byte            `json:"channelId"`
 	MapId              int             `json:"mapId"`

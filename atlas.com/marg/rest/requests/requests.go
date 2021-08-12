@@ -1,8 +1,10 @@
 package requests
 
 import (
-	"atlas-marg/json"
+	json2 "atlas-marg/json"
 	"atlas-marg/retry"
+	"bytes"
+	"encoding/json"
 	"github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -50,8 +52,21 @@ func Get(l logrus.FieldLogger) func(url string, resp interface{}, configurators 
 	}
 }
 
+func Post(url string, input interface{}) (*http.Response, error) {
+	jsonReq, err := json.Marshal(input)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := http.Post(url, "application/json; charset=utf-8", bytes.NewReader(jsonReq))
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func processResponse(r *http.Response, rb interface{}) error {
-	err := json.FromJSON(rb, r.Body)
+	err := json2.FromJSON(rb, r.Body)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,7 @@ package monster
 import (
 	_map "atlas-marg/map"
 	"atlas-marg/models"
-	"atlas-marg/processor"
+	"atlas-marg/monster"
 	"atlas-marg/registries"
 	"github.com/sirupsen/logrus"
 	"math"
@@ -15,7 +15,7 @@ func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32
 	return func(worldId byte, channelId byte, mapId uint32) {
 		c := len(registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId))
 		if c > 0 {
-			sps, err := _map.NewMap(l).GetMonsterSpawnPoints(mapId)
+			sps, err := _map.GetMonsterSpawnPoints(l)(mapId)
 			if err != nil {
 				l.WithError(err).Errorf("Unable to get spawn points for map %d.", mapId)
 				return
@@ -28,7 +28,7 @@ func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32
 				}
 			}
 
-			monstersInMap, err := processor.CountInMap(l)(worldId, channelId, mapId)
+			monstersInMap, err := monster.CountInMap(l)(worldId, channelId, mapId)
 			if err != nil {
 				l.WithError(err).Warnf("Assuming no monsters in map.")
 			}
@@ -40,7 +40,7 @@ func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32
 				result := shuffle(ableSps)
 				for i := 0; i < toSpawn; i++ {
 					x := result[i]
-					processor.CreateMonster(l)(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
+					monster.CreateMonster(l)(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
 				}
 			}
 		}
