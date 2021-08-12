@@ -1,9 +1,9 @@
 package consumers
 
 import (
+	"atlas-marg/character"
 	"atlas-marg/kafka/handler"
 	"atlas-marg/kafka/producers"
-	"atlas-marg/processor"
 	"atlas-marg/registries"
 	"github.com/sirupsen/logrus"
 )
@@ -11,8 +11,8 @@ import (
 type characterStatusEvent struct {
 	WorldId     byte   `json:"worldId"`
 	ChannelId   byte   `json:"channelId"`
-	AccountId   int    `json:"accountId"`
-	CharacterId int    `json:"characterId"`
+	AccountId   uint32 `json:"accountId"`
+	CharacterId uint32 `json:"characterId"`
 	Type        string `json:"type"`
 }
 
@@ -26,13 +26,13 @@ func HandleCharacterStatus() handler.EventHandler {
 	return func(l logrus.FieldLogger, e interface{}) {
 		if event, ok := e.(*characterStatusEvent); ok {
 			if event.Type == "LOGIN" {
-				mk, err := processor.GetMapForCharacter(l)(event.CharacterId)
+				mk, err := character.GetMapForCharacter(l)(event.CharacterId)
 				if err == nil {
 					registries.GetMapCharacterRegistry().AddCharacterToMap(event.WorldId, event.ChannelId, mk, event.CharacterId)
 					producers.EnterMap(l)(event.WorldId, event.ChannelId, mk, event.CharacterId)
 				}
 			} else if event.Type == "LOGOUT" {
-				mk, err := processor.GetMapForCharacter(l)(event.CharacterId)
+				mk, err := character.GetMapForCharacter(l)(event.CharacterId)
 				if err == nil {
 					registries.GetMapCharacterRegistry().RemoveCharacterFromMap(event.CharacterId)
 					producers.ExitMap(l)(event.WorldId, event.ChannelId, mk, event.CharacterId)

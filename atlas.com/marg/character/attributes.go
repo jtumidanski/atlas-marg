@@ -1,16 +1,16 @@
-package attributes
+package character
 
-type CharacterDataContainer struct {
-	Data CharacterData `json:"data"`
+type DataContainer struct {
+	Data DataBody `json:"data"`
 }
 
-type CharacterData struct {
-	Id         string              `json:"id"`
-	Type       string              `json:"type"`
-	Attributes CharacterAttributes `json:"attributes"`
+type DataBody struct {
+	Id         string     `json:"id"`
+	Type       string     `json:"type"`
+	Attributes Attributes `json:"attributes"`
 }
 
-type CharacterAttributes struct {
+type Attributes struct {
 	AccountId          int    `json:"accountId"`
 	WorldId            int    `json:"worldId"`
 	Name               string `json:"name"`
@@ -35,7 +35,7 @@ type CharacterAttributes struct {
 	Face               int    `json:"face"`
 	Ap                 int    `json:"ap"`
 	Sp                 string `json:"sp"`
-	MapId              int    `json:"mapId"`
+	MapId              uint32 `json:"mapId"`
 	SpawnPoint         int    `json:"spawnPoint"`
 	Gm                 int    `json:"gm"`
 	X                  int    `json:"x"`

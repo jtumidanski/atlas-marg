@@ -9,11 +9,11 @@ import (
 )
 
 type mapChangedEvent struct {
-	WorldId     byte `json:"worldId"`
-	ChannelId   byte `json:"channelId"`
-	MapId       int  `json:"mapId"`
-	PortalId    int  `json:"portalId"`
-	CharacterId int  `json:"characterId"`
+	WorldId     byte   `json:"worldId"`
+	ChannelId   byte   `json:"channelId"`
+	MapId       uint32 `json:"mapId"`
+	PortalId    uint32 `json:"portalId"`
+	CharacterId uint32 `json:"characterId"`
 }
 
 func MapChangedCreator() handler.EmptyEventCreator {

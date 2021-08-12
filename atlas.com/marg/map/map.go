@@ -16,7 +16,7 @@ func NewMap(l logrus.FieldLogger) *Map {
 	return &Map{l}
 }
 
-func (c *Map) GetMonsterSpawnPoints(mapId int) ([]models.MonsterSpawnPoint, error) {
+func (c *Map) GetMonsterSpawnPoints(mapId uint32) ([]models.MonsterSpawnPoint, error) {
 	r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/mis/maps/%d/monsters", mapId))
 	if err != nil {
 		c.l.WithError(err).Errorf("Retrieving monster spawn data for map %d", mapId)

@@ -3,10 +3,10 @@ package models
 type MapKey struct {
 	WorldId   byte
 	ChannelId byte
-	MapId     int
+	MapId     uint32
 }
 
-func NewMapKey(worldId byte, channelId byte, mapId int) *MapKey {
+func NewMapKey(worldId byte, channelId byte, mapId uint32) *MapKey {
 	return &MapKey{worldId, channelId, mapId}
 }
 
@@ -26,6 +26,6 @@ func GetChannelKey(worldId byte, channelId byte) int64 {
 	return w + c
 }
 
-func GetMapKey(worldId byte, channelId byte, mapId int) int64 {
+func GetMapKey(worldId byte, channelId byte, mapId uint32) int64 {
 	return GetChannelKey(worldId, channelId) + int64(mapId)
 }

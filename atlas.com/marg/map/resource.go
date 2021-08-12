@@ -39,7 +39,7 @@ func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 			rw.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		mapId := value
+		mapId := uint32(value)
 
 		for _, x := range registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId) {
 			var serverData = getMapCharactersResponseObject(x)
@@ -54,9 +54,9 @@ func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 	}
 }
 
-func getMapCharactersResponseObject(id int) attributes.MapCharactersData {
+func getMapCharactersResponseObject(id uint32) attributes.MapCharactersData {
 	return attributes.MapCharactersData{
-		Id:         strconv.Itoa(id),
+		Id:         strconv.Itoa(int(id)),
 		Type:       "com.atlas.mrg.rest.attribute.MapCharacterAttributes",
 		Attributes: attributes.MapCharactersAttributes{},
 	}

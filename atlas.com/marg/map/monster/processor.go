@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int) {
-	return func(worldId byte, channelId byte, mapId int) {
+func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) {
+	return func(worldId byte, channelId byte, mapId uint32) {
 		c := len(registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId))
 		if c > 0 {
 			sps, err := _map.NewMap(l).GetMonsterSpawnPoints(mapId)

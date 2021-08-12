@@ -12,9 +12,9 @@ import (
 	"time"
 )
 
-func CreateKey(key int) []byte {
+func CreateKey(key uint32) []byte {
 	b := make([]byte, 8)
-	binary.LittleEndian.PutUint32(b, uint32(key))
+	binary.LittleEndian.PutUint32(b, key)
 	return b
 }
 

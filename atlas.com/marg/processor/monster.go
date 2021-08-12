@@ -9,8 +9,8 @@ import (
 	"net/http"
 )
 
-func CountInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int) (int, error) {
-	return func(worldId byte, channelId byte, mapId int) (int, error) {
+func CountInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) (int, error) {
+	return func(worldId byte, channelId byte, mapId uint32) (int, error) {
 		r, err := http.Get(fmt.Sprintf("http://atlas-nginx:80/ms/morg/worlds/%d/channels/%d/maps/%d/monsters", worldId, channelId, mapId))
 		if err != nil {
 			l.WithError(err).Errorf("Retrieving monster data for map %d", mapId)
@@ -27,8 +27,8 @@ func CountInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId i
 	}
 }
 
-func CreateMonster(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId int, monsterId uint32, x int16, y int16, fh uint16, team int32) {
-	return func(worldId byte, channelId byte, mapId int, monsterId uint32, x int16, y int16, fh uint16, team int32) {
+func CreateMonster(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32, monsterId uint32, x int16, y int16, fh uint16, team int32) {
+	return func(worldId byte, channelId byte, mapId uint32, monsterId uint32, x int16, y int16, fh uint16, team int32) {
 		monster := attributes.MonsterInputDataContainer{
 			Data: attributes.MonsterData{
 				Id:   "0",
