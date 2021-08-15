@@ -2,7 +2,6 @@ package _map
 
 import (
 	"atlas-marg/json"
-	"atlas-marg/registries"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -41,7 +40,7 @@ func GetMapCharacters(l log.FieldLogger) http.HandlerFunc {
 		}
 		mapId := uint32(value)
 
-		for _, x := range registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId) {
+		for _, x := range GetCharacterRegistry().GetInMap(worldId, channelId, mapId) {
 			var serverData = getMapCharactersResponseObject(x)
 			response.Data = append(response.Data, serverData)
 		}

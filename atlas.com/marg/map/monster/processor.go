@@ -4,7 +4,6 @@ import (
 	_map "atlas-marg/map"
 	"atlas-marg/models"
 	"atlas-marg/monster"
-	"atlas-marg/registries"
 	"github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
@@ -13,7 +12,7 @@ import (
 
 func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32) {
-		c := len(registries.GetMapCharacterRegistry().GetCharactersInMap(worldId, channelId, mapId))
+		c := len(_map.GetCharacterRegistry().GetInMap(worldId, channelId, mapId))
 		if c > 0 {
 			sps, err := _map.GetMonsterSpawnPoints(l)(mapId)
 			if err != nil {

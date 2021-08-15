@@ -1,4 +1,4 @@
-package registries
+package _map
 
 import (
 	"atlas-marg/models"
@@ -6,7 +6,7 @@ import (
 	"sync"
 )
 
-type MapCharacterRegistry struct {
+type CharacterRegistry struct {
 	mutex sync.Mutex
 
 	mapCharacters map[models.MapKey][]uint32
@@ -16,21 +16,21 @@ type MapCharacterRegistry struct {
 	characterLocks map[uint32]*sync.Mutex
 }
 
-var mapCharacterRegistry *MapCharacterRegistry
+var characterRegistry *CharacterRegistry
 var once sync.Once
 
-func GetMapCharacterRegistry() *MapCharacterRegistry {
+func GetCharacterRegistry() *CharacterRegistry {
 	once.Do(func() {
-		mapCharacterRegistry = &MapCharacterRegistry{}
-		mapCharacterRegistry.characterMap = make(map[uint32]models.MapKey)
-		mapCharacterRegistry.mapCharacters = make(map[models.MapKey][]uint32)
-		mapCharacterRegistry.mapLocks = make(map[int64]*sync.Mutex)
-		mapCharacterRegistry.characterLocks = make(map[uint32]*sync.Mutex)
+		characterRegistry = &CharacterRegistry{}
+		characterRegistry.characterMap = make(map[uint32]models.MapKey)
+		characterRegistry.mapCharacters = make(map[models.MapKey][]uint32)
+		characterRegistry.mapLocks = make(map[int64]*sync.Mutex)
+		characterRegistry.characterLocks = make(map[uint32]*sync.Mutex)
 	})
-	return mapCharacterRegistry
+	return characterRegistry
 }
 
-func (r *MapCharacterRegistry) getCharacterLock(characterId uint32) *sync.Mutex {
+func (r *CharacterRegistry) getCharacterLock(characterId uint32) *sync.Mutex {
 	if val, ok := r.characterLocks[characterId]; ok {
 		return val
 	} else {
@@ -42,12 +42,12 @@ func (r *MapCharacterRegistry) getCharacterLock(characterId uint32) *sync.Mutex 
 	}
 }
 
-func (r *MapCharacterRegistry) getMapLock(worldId byte, channelId byte, mapId uint32) *sync.Mutex {
+func (r *CharacterRegistry) getMapLock(worldId byte, channelId byte, mapId uint32) *sync.Mutex {
 	mk := models.GetMapKey(worldId, channelId, mapId)
 	return r.getMapLockWithKey(mk)
 }
 
-func (r *MapCharacterRegistry) getMapLockWithKey(mk int64) *sync.Mutex {
+func (r *CharacterRegistry) getMapLockWithKey(mk int64) *sync.Mutex {
 	if val, ok := r.mapLocks[mk]; ok {
 		return val
 	} else {
@@ -73,14 +73,14 @@ func indexOf(id uint32, data []uint32) int {
 	return -1 //not found.
 }
 
-func (r *MapCharacterRegistry) removeMapCharacter(mapId models.MapKey, characterId uint32) {
+func (r *CharacterRegistry) removeMapCharacter(mapId models.MapKey, characterId uint32) {
 	index := indexOf(characterId, r.mapCharacters[mapId])
 	if index >= 0 && index < len(r.mapCharacters[mapId]) {
 		r.mapCharacters[mapId] = remove(r.mapCharacters[mapId], index)
 	}
 }
 
-func (r *MapCharacterRegistry) AddCharacterToMap(worldId byte, channelId byte, mapId uint32, characterId uint32) {
+func (r *CharacterRegistry) AddToMap(worldId byte, channelId byte, mapId uint32, characterId uint32) {
 	characterLock := r.getCharacterLock(characterId)
 	characterLock.Lock()
 	if om, ok := r.characterMap[characterId]; ok {
@@ -103,7 +103,7 @@ func (r *MapCharacterRegistry) AddCharacterToMap(worldId byte, channelId byte, m
 	characterLock.Unlock()
 }
 
-func (r *MapCharacterRegistry) RemoveCharacterFromMap(characterId uint32) {
+func (r *CharacterRegistry) RemoveFromMap(characterId uint32) {
 	characterLock := r.getCharacterLock(characterId)
 	characterLock.Lock()
 	if mk, ok := r.characterMap[characterId]; ok {
@@ -116,19 +116,19 @@ func (r *MapCharacterRegistry) RemoveCharacterFromMap(characterId uint32) {
 	characterLock.Unlock()
 }
 
-func (r *MapCharacterRegistry) GetMapForCharacter(characterId uint32) (uint32, error) {
+func (r *CharacterRegistry) GetMapId(characterId uint32) (uint32, error) {
 	if mk, ok := r.characterMap[characterId]; ok {
 		return mk.MapId, nil
 	}
 	return 0, errors.New("character not found")
 }
 
-func (r *MapCharacterRegistry) GetCharactersInMap(worldId byte, channelId byte, mapId uint32) []uint32 {
+func (r *CharacterRegistry) GetInMap(worldId byte, channelId byte, mapId uint32) []uint32 {
 	mk := models.NewMapKey(worldId, channelId, mapId)
 	return r.mapCharacters[*mk]
 }
 
-func (r *MapCharacterRegistry) GetMapsWithCharacters() []models.MapKey {
+func (r *CharacterRegistry) GetMapsWithCharacters() []models.MapKey {
 	var result []models.MapKey
 	for i, x := range r.mapCharacters {
 		if len(x) > 0 {

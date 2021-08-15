@@ -1,8 +1,8 @@
 package tasks
 
 import (
+	"atlas-marg/map"
 	"atlas-marg/map/monster"
-	"atlas-marg/registries"
 	"github.com/sirupsen/logrus"
 	"time"
 )
@@ -17,7 +17,7 @@ func NewRespawn(l logrus.FieldLogger, interval int) *Respawn {
 }
 
 func (r *Respawn) Run() {
-	mks := registries.GetMapCharacterRegistry().GetMapsWithCharacters()
+	mks := _map.GetCharacterRegistry().GetMapsWithCharacters()
 	for _, mk := range mks {
 		go monster.Spawn(r.l)(mk.WorldId, mk.ChannelId, mk.MapId)
 	}
