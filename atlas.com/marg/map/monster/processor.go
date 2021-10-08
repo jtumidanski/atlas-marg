@@ -4,17 +4,18 @@ import (
 	_map "atlas-marg/map"
 	"atlas-marg/models"
 	"atlas-marg/monster"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"math"
 	"math/rand"
 	"time"
 )
 
-func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) {
+func Spawn(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32) {
 		c := len(_map.GetCharacterRegistry().GetInMap(worldId, channelId, mapId))
 		if c > 0 {
-			sps, err := _map.GetMonsterSpawnPoints(l)(mapId)
+			sps, err := _map.GetMonsterSpawnPoints(l, span)(mapId)
 			if err != nil {
 				l.WithError(err).Errorf("Unable to get spawn points for map %d.", mapId)
 				return
@@ -27,7 +28,7 @@ func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32
 				}
 			}
 
-			monstersInMap, err := monster.CountInMap(l)(worldId, channelId, mapId)
+			monstersInMap, err := monster.CountInMap(l, span)(worldId, channelId, mapId)
 			if err != nil {
 				l.WithError(err).Warnf("Assuming no monsters in map.")
 			}
@@ -39,7 +40,7 @@ func Spawn(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32
 				result := shuffle(ableSps)
 				for i := 0; i < toSpawn; i++ {
 					x := result[i]
-					monster.CreateMonster(l)(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
+					monster.CreateMonster(l, span)(worldId, channelId, mapId, x.Id, x.X, x.Y, x.Fh, x.Team)
 				}
 			}
 		}

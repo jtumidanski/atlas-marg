@@ -2,12 +2,13 @@ package _map
 
 import (
 	"atlas-marg/models"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
-func GetMonsterSpawnPoints(l logrus.FieldLogger) func(mapId uint32) ([]models.MonsterSpawnPoint, error) {
+func GetMonsterSpawnPoints(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32) ([]models.MonsterSpawnPoint, error) {
 	return func(mapId uint32) ([]models.MonsterSpawnPoint, error) {
-		data, err := requestMonsterSpawnPoints(l)(mapId)
+		data, err := requestMonsterSpawnPoints(l, span)(mapId)
 		if err != nil {
 			return nil, err
 		}

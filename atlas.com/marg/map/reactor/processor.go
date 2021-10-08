@@ -1,13 +1,14 @@
 package reactor
 
 import (
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
-func GetInMap(l logrus.FieldLogger) func(mapId uint32) ([]Model, error) {
+func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32) ([]Model, error) {
 	return func(mapId uint32) ([]Model, error) {
-		data, err := requestReactors(l)(mapId)
+		data, err := requestReactors(l, span)(mapId)
 		if err != nil {
 			l.WithError(err).Errorf("Unable to retrieve reactors for map %d.", mapId)
 			return make([]Model, 0), err

@@ -3,6 +3,7 @@ package reactor
 import (
 	"atlas-marg/rest/requests"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,10 +14,10 @@ const (
 	reactorsResource                   = mapsResource + "%d/reactors"
 )
 
-func requestReactors(l logrus.FieldLogger) func(mapId uint32) (*DataListContainer, error) {
+func requestReactors(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32) (*DataListContainer, error) {
 	return func(mapId uint32) (*DataListContainer, error) {
 		ar := &DataListContainer{}
-		err := requests.Get(l)(fmt.Sprintf(reactorsResource, mapId), ar)
+		err := requests.Get(l, span)(fmt.Sprintf(reactorsResource, mapId), ar)
 		if err != nil {
 			return nil, err
 		}

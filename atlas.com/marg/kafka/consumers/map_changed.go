@@ -3,6 +3,7 @@ package consumers
 import (
 	"atlas-marg/character"
 	"atlas-marg/kafka/handler"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,9 +22,9 @@ func MapChangedCreator() handler.EmptyEventCreator {
 }
 
 func HandleMapChanged() handler.EventHandler {
-	return func(l logrus.FieldLogger, e interface{}) {
+	return func(l logrus.FieldLogger, span opentracing.Span, e interface{}) {
 		if event, ok := e.(*mapChangedEvent); ok {
-			character.TransitionMap(l)(event.WorldId, event.ChannelId, event.MapId, event.CharacterId)
+			character.TransitionMap(l, span)(event.WorldId, event.ChannelId, event.MapId, event.CharacterId)
 		} else {
 			l.Errorf("Unable to cast event provided to handler")
 		}

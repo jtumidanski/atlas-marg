@@ -3,6 +3,7 @@ package consumers
 import (
 	"atlas-marg/character"
 	"atlas-marg/kafka/handler"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -21,12 +22,12 @@ func CharacterStatusCreator() handler.EmptyEventCreator {
 }
 
 func HandleCharacterStatus() handler.EventHandler {
-	return func(l logrus.FieldLogger, e interface{}) {
+	return func(l logrus.FieldLogger, span opentracing.Span, e interface{}) {
 		if event, ok := e.(*characterStatusEvent); ok {
 			if event.Type == "LOGIN" {
-				character.EnterMap(l)(event.WorldId, event.ChannelId, event.CharacterId)
+				character.EnterMap(l, span)(event.WorldId, event.ChannelId, event.CharacterId)
 			} else if event.Type == "LOGOUT" {
-				character.ExitMap(l)(event.WorldId, event.ChannelId, event.CharacterId)
+				character.ExitMap(l, span)(event.WorldId, event.ChannelId, event.CharacterId)
 			} else {
 				l.Errorf("Unhandled event status %s.", event.Type)
 			}

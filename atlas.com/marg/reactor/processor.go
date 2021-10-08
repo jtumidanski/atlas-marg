@@ -2,20 +2,24 @@ package reactor
 
 import (
 	"atlas-marg/map/reactor"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
 
-func SpawnMissing(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) {
+func SpawnMissing(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32) {
-		existing, err := GetInMap(l)(worldId, channelId, mapId)
+		existing, err := GetInMap(l, span)(worldId, channelId, mapId)
 		if err != nil {
 			l.WithError(err).Errorf("Unable to retrieve existing reactors in map %d.", mapId)
 		}
-		needed, err := reactor.GetInMap(l)(mapId)
+		needed, err := reactor.GetInMap(l, span)(mapId)
 		for _, nr := range needed {
 			if !locationMatch(nr, existing) {
-				requestCreate(worldId, channelId, mapId, nr.Classification(), nr.Name(), 0, nr.X(), nr.Y(), nr.Delay(), nr.Direction())
+				err = requestCreate(l, span)(worldId, channelId, mapId, nr.Classification(), nr.Name(), 0, nr.X(), nr.Y(), nr.Delay(), nr.Direction())
+				if err != nil {
+					l.WithError(err).Errorf("Unable to spawn missing reactors.")
+				}
 			}
 		}
 
@@ -31,9 +35,9 @@ func locationMatch(reference reactor.Model, existing []Model) bool {
 	return false
 }
 
-func GetInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) ([]Model, error) {
+func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) ([]Model, error) {
 	return func(worldId byte, channelId byte, mapId uint32) ([]Model, error) {
-		resp, err := requestInMap(l)(worldId, channelId, mapId)
+		resp, err := requestInMap(l, span)(worldId, channelId, mapId)
 		if err != nil {
 			return nil, err
 		}

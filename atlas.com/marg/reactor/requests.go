@@ -3,6 +3,7 @@ package reactor
 import (
 	"atlas-marg/rest/requests"
 	"fmt"
+	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
 
@@ -13,10 +14,10 @@ const (
 	mapReactorsResource         = reactorService + "worlds/%d/channels/%d/maps/%d/reactors"
 )
 
-func requestInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId uint32) (*DataListContainer, error) {
+func requestInMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) (*DataListContainer, error) {
 	return func(worldId byte, channelId byte, mapId uint32) (*DataListContainer, error) {
 		dc := &DataListContainer{}
-		err := requests.Get(l)(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId), dc)
+		err := requests.Get(l, span)(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId), dc)
 		if err != nil {
 			return nil, err
 		}
@@ -24,26 +25,28 @@ func requestInMap(l logrus.FieldLogger) func(worldId byte, channelId byte, mapId
 	}
 }
 
-func requestCreate(worldId byte, channelId byte, mapId uint32, classification uint32, name string, state int8, x int16, y int16, delay uint32, direction byte) error {
-	i := InputDataContainer{
-		Data: DataBody{
-			Id:   "",
-			Type: "",
-			Attributes: Attributes{
-				Classification:  classification,
-				Name:            name,
-				State:           state,
-				X:               x,
-				Y:               y,
-				Delay:           delay,
-				FacingDirection: direction,
+func requestCreate(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, classification uint32, name string, state int8, x int16, y int16, delay uint32, direction byte) error {
+	return func(worldId byte, channelId byte, mapId uint32, classification uint32, name string, state int8, x int16, y int16, delay uint32, direction byte) error {
+		i := InputDataContainer{
+			Data: DataBody{
+				Id:   "",
+				Type: "",
+				Attributes: Attributes{
+					Classification:  classification,
+					Name:            name,
+					State:           state,
+					X:               x,
+					Y:               y,
+					Delay:           delay,
+					FacingDirection: direction,
+				},
 			},
-		},
-	}
+		}
 
-	_, err := requests.Post(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId), i)
-	if err != nil {
-		return err
+		_, err := requests.Post(l, span)(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId), i)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil
 }
