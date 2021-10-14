@@ -14,51 +14,63 @@ const GetMapCharacters = "get_map_characters"
 
 func InitResource(router *mux.Router, l logrus.FieldLogger) {
 	mRouter := router.PathPrefix("/worlds").Subrouter()
-	mRouter.HandleFunc("/{worldId}/channels/{channelId}/maps/{mapId}/characters", rest.RetrieveSpan(GetMapCharacters, HandleGetMapCharacters(l))).Methods(http.MethodGet)
+	mRouter.HandleFunc("/{worldId}/channels/{channelId}/maps/{mapId}/characters", registerGetMapCharacters(l)).Methods(http.MethodGet)
 }
 
-func HandleGetMapCharacters(l logrus.FieldLogger) rest.SpanHandler {
-	return func(span opentracing.Span) http.HandlerFunc {
-		return func(rw http.ResponseWriter, r *http.Request) {
-			var response CharacterDataListContainer
-			response.Data = make([]CharactersDataBody, 0)
+func registerGetMapCharacters(l logrus.FieldLogger) http.HandlerFunc {
+	return rest.RetrieveSpan(GetMapCharacters, func(span opentracing.Span) http.HandlerFunc {
+		return parseMap(l, func(worldId byte, channelId byte, mapId uint32) http.HandlerFunc {
+			return handleGetMapCharacters(l)(span)(worldId, channelId, mapId)
+		})
+	})
+}
 
-			vars := mux.Vars(r)
-			value, err := strconv.Atoi(vars["worldId"])
-			if err != nil {
-				l.WithError(err).Errorf("Error parsing worldId as integer")
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			worldId := byte(value)
+type mapHandler func(worldId byte, channelId byte, mapId uint32) http.HandlerFunc
 
-			vars = mux.Vars(r)
-			value, err = strconv.Atoi(vars["channelId"])
-			if err != nil {
-				l.WithError(err).Errorf("Error parsing channelId as integer")
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			channelId := byte(value)
+func parseMap(l logrus.FieldLogger, next mapHandler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		worldId, err := strconv.ParseUint(vars["worldId"], 10, 8)
+		if err != nil {
+			l.WithError(err).Errorf("Error parsing worldId as byte")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-			vars = mux.Vars(r)
-			value, err = strconv.Atoi(vars["mapId"])
-			if err != nil {
-				l.WithError(err).Errorf("Error parsing mapId as integer")
-				rw.WriteHeader(http.StatusBadRequest)
-				return
-			}
-			mapId := uint32(value)
+		channelId, err := strconv.ParseUint(vars["channelId"], 10, 8)
+		if err != nil {
+			l.WithError(err).Errorf("Error parsing channelId as byte")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 
-			for _, x := range GetCharacterRegistry().GetInMap(worldId, channelId, mapId) {
-				var serverData = getMapCharactersResponseObject(x)
-				response.Data = append(response.Data, serverData)
-			}
+		mapId, err := strconv.ParseUint(vars["mapId"], 10, 32)
+		if err != nil {
+			l.WithError(err).Errorf("Error parsing mapId as uint32")
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		next(byte(worldId), byte(channelId), uint32(mapId))(w, r)
+	}
+}
 
-			err = json.ToJSON(response, rw)
-			if err != nil {
-				l.WithError(err).Errorf("Error encoding GetChannelServers response")
-				rw.WriteHeader(http.StatusInternalServerError)
+func handleGetMapCharacters(l logrus.FieldLogger) func(span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) http.HandlerFunc {
+	return func(span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) http.HandlerFunc {
+		return func(worldId byte, channelId byte, mapId uint32) http.HandlerFunc {
+			return func(rw http.ResponseWriter, r *http.Request) {
+				var response CharacterDataListContainer
+				response.Data = make([]CharactersDataBody, 0)
+
+				for _, x := range GetCharacterRegistry().GetInMap(worldId, channelId, mapId) {
+					var serverData = getMapCharactersResponseObject(x)
+					response.Data = append(response.Data, serverData)
+				}
+
+				err := json.ToJSON(response, rw)
+				if err != nil {
+					l.WithError(err).Errorf("Error encoding GetChannelServers response")
+					rw.WriteHeader(http.StatusInternalServerError)
+				}
 			}
 		}
 	}
