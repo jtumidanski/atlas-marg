@@ -45,7 +45,7 @@ func main() {
 
 	go tasks.Register(tasks.NewRespawn(l, config.RespawnInterval))
 
-	rest.CreateService(l, ctx, wg, "/ms/marg", _map.InitResource)
+	rest.CreateService(l, ctx, wg, "/ms/mrg", _map.InitResource)
 
 	// trap sigterm or interrupt and gracefully shutdown the server
 	c := make(chan os.Signal, 1)
