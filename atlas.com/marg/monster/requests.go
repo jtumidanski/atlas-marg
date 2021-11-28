@@ -39,7 +39,6 @@ func requestCreate(l logrus.FieldLogger, span opentracing.Span) func(worldId byt
 				},
 			},
 		}
-		_, err := requests.Post(l, span)(fmt.Sprintf(mapMonstersResource, worldId, channelId, mapId), monster)
-		return err
+		return requests.Post(l, span)(fmt.Sprintf(mapMonstersResource, worldId, channelId, mapId), monster, nil, nil)
 	}
 }
