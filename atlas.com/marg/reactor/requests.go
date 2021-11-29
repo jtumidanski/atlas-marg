@@ -14,24 +14,30 @@ const (
 	mapReactorsResource         = reactorService + "worlds/%d/channels/%d/maps/%d/reactors"
 )
 
-func requestInMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) (*DataListContainer, error) {
-	return func(worldId byte, channelId byte, mapId uint32) (*DataListContainer, error) {
-		dc := &DataListContainer{}
-		err := requests.Get(l, span)(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId), dc)
+type Request func(l logrus.FieldLogger, span opentracing.Span) (*dataContainer, error)
+
+func makeRequest(url string) Request {
+	return func(l logrus.FieldLogger, span opentracing.Span) (*dataContainer, error) {
+		ar := &dataContainer{}
+		err := requests.Get(l, span)(url, ar)
 		if err != nil {
 			return nil, err
 		}
-		return dc, nil
+		return ar, nil
 	}
+}
+
+func requestInMap(worldId byte, channelId byte, mapId uint32) Request {
+	return makeRequest(fmt.Sprintf(mapReactorsResource, worldId, channelId, mapId))
 }
 
 func requestCreate(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, classification uint32, name string, state int8, x int16, y int16, delay uint32, direction byte) error {
 	return func(worldId byte, channelId byte, mapId uint32, classification uint32, name string, state int8, x int16, y int16, delay uint32, direction byte) error {
-		i := InputDataContainer{
-			Data: DataBody{
+		i := inputDataContainer{
+			Data: dataBody{
 				Id:   "",
 				Type: "",
-				Attributes: Attributes{
+				Attributes: attributes{
 					Classification:  classification,
 					Name:            name,
 					State:           state,

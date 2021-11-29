@@ -6,27 +6,59 @@ import (
 	"strconv"
 )
 
-func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32) ([]Model, error) {
-	return func(mapId uint32) ([]Model, error) {
-		data, err := requestReactors(l, span)(mapId)
-		if err != nil {
-			l.WithError(err).Errorf("Unable to retrieve reactors for map %d.", mapId)
-			return make([]Model, 0), err
-		}
+type ModelOperator func(*Model)
 
-		results := make([]Model, 0)
-		for _, d := range data.Data {
-			p, err := makeReactor(d)
+type ModelListOperator func([]*Model)
+
+type ModelProvider func() (*Model, error)
+
+type ModelListProvider func() ([]*Model, error)
+
+type Filter func(*Model) bool
+
+func requestModelListProvider(l logrus.FieldLogger, span opentracing.Span) func(r Request, filters ...Filter) ModelListProvider {
+	return func(r Request, filters ...Filter) ModelListProvider {
+		return func() ([]*Model, error) {
+			resp, err := r(l, span)
 			if err != nil {
 				return nil, err
 			}
-			results = append(results, *p)
+
+			ms := make([]*Model, 0)
+			for _, v := range resp.DataList() {
+				m, err := makeModel(&v)
+				if err != nil {
+					return nil, err
+				}
+				ok := true
+				for _, filter := range filters {
+					if !filter(m) {
+						ok = false
+						break
+					}
+				}
+				if ok {
+					ms = append(ms, m)
+				}
+			}
+			return ms, nil
 		}
-		return results, nil
 	}
 }
 
-func makeReactor(body DataBody) (*Model, error) {
+func InMapModelProvider(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32, filters ...Filter) ModelListProvider {
+	return func(mapId uint32, filters ...Filter) ModelListProvider {
+		return requestModelListProvider(l, span)(requestInMap(mapId), filters...)
+	}
+}
+
+func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32, filters ...Filter) ([]*Model, error) {
+	return func(mapId uint32, filters ...Filter) ([]*Model, error) {
+		return InMapModelProvider(l, span)(mapId, filters...)()
+	}
+}
+
+func makeModel(body *dataBody) (*Model, error) {
 	id, err := strconv.ParseUint(body.Id, 10, 32)
 	if err != nil {
 		return nil, err
