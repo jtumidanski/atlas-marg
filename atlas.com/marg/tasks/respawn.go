@@ -3,6 +3,7 @@ package tasks
 import (
 	"atlas-marg/map"
 	"atlas-marg/map/monster"
+	"atlas-marg/reactor"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"time"
@@ -24,6 +25,7 @@ func (r *Respawn) Run() {
 	mks := _map.GetCharacterRegistry().GetMapsWithCharacters()
 	for _, mk := range mks {
 		go monster.Spawn(r.l, span)(mk.WorldId, mk.ChannelId, mk.MapId)
+		go reactor.SpawnMissing(r.l, span)(mk.WorldId, mk.ChannelId, mk.MapId)
 	}
 	span.Finish()
 }
