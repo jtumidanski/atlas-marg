@@ -1,6 +1,7 @@
-package producers
+package character
 
 import (
+	"atlas-marg/kafka"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 )
@@ -13,18 +14,18 @@ type mapCharacterEvent struct {
 	Type        string `json:"type"`
 }
 
-func EnterMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
-	producer := ProduceEvent(l, span, "TOPIC_MAP_CHARACTER_EVENT")
+func emitEnterMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
+	producer := kafka.ProduceEvent(l, span, "TOPIC_MAP_CHARACTER_EVENT")
 	return func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
 		e := &mapCharacterEvent{WorldId: worldId, ChannelId: channelId, MapId: mapId, CharacterId: characterId, Type: "ENTER"}
-		producer(CreateKey(int(mapId)), e)
+		producer(kafka.CreateKey(int(mapId)), e)
 	}
 }
 
-func ExitMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
-	producer := ProduceEvent(l, span, "TOPIC_MAP_CHARACTER_EVENT")
+func emitExitMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
+	producer := kafka.ProduceEvent(l, span, "TOPIC_MAP_CHARACTER_EVENT")
 	return func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
 		e := &mapCharacterEvent{WorldId: worldId, ChannelId: channelId, MapId: mapId, CharacterId: characterId, Type: "EXIT"}
-		producer(CreateKey(int(mapId)), e)
+		producer(kafka.CreateKey(int(mapId)), e)
 	}
 }

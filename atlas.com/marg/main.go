@@ -1,8 +1,9 @@
 package main
 
 import (
+	"atlas-marg/character"
 	"atlas-marg/configurations"
-	"atlas-marg/kafka/consumers"
+	"atlas-marg/kafka"
 	"atlas-marg/logger"
 	_map "atlas-marg/map"
 	"atlas-marg/rest"
@@ -17,6 +18,7 @@ import (
 )
 
 const serviceName = "atlas-marg"
+const consumerGroupId = "Map Registry Service"
 
 func main() {
 	l := logger.CreateLogger(serviceName)
@@ -41,7 +43,9 @@ func main() {
 		l.WithError(err).Fatalf("Retrieving the service configuration.")
 	}
 
-	consumers.CreateEventConsumers(l, ctx, wg)
+	kafka.CreateConsumers(l, ctx, wg,
+		character.StatusConsumer(consumerGroupId),
+		character.MapChangedConsumer(consumerGroupId))
 
 	go tasks.Register(tasks.NewRespawn(l, config.RespawnInterval))
 

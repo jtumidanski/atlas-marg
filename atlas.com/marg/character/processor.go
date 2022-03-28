@@ -1,7 +1,6 @@
 package character
 
 import (
-	"atlas-marg/kafka/producers"
 	"atlas-marg/map"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
@@ -40,7 +39,7 @@ func EnterMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, ch
 func enterMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32, characterId uint32) {
 		_map.GetCharacterRegistry().AddToMap(worldId, channelId, mapId, characterId)
-		producers.EnterMap(l, span)(worldId, channelId, mapId, characterId)
+		emitEnterMap(l, span)(worldId, channelId, mapId, characterId)
 	}
 }
 
@@ -49,7 +48,7 @@ func ExitMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, cha
 		mk, err := _map.GetCharacterRegistry().GetMapId(characterId)
 		if err == nil {
 			_map.GetCharacterRegistry().RemoveFromMap(characterId)
-			producers.ExitMap(l, span)(worldId, channelId, mk, characterId)
+			emitExitMap(l, span)(worldId, channelId, mk, characterId)
 		}
 	}
 }
