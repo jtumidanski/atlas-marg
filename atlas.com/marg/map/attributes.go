@@ -13,17 +13,7 @@ type CharactersDataBody struct {
 type CharacterAttributes struct {
 }
 
-type MonsterInformationListDataContainer struct {
-	Data []MonsterInformationData `json:"data"`
-}
-
-type MonsterInformationData struct {
-	Id         string                       `json:"id"`
-	Type       string                       `json:"type"`
-	Attributes MonsterInformationAttributes `json:"attributes"`
-}
-
-type MonsterInformationAttributes struct {
+type monsterAttributes struct {
 	Id      uint32 `json:"id"`
 	MobTime uint32 `json:"mob_time"`
 	Team    int32  `json:"team"`

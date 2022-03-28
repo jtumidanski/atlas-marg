@@ -1,17 +1,7 @@
 package reactor
 
-import (
-	"atlas-marg/rest/response"
-	"encoding/json"
-)
-
 type inputDataContainer struct {
 	Data dataBody `json:"data"`
-}
-
-type dataContainer struct {
-	data     response.DataSegment
-	included response.DataSegment
 }
 
 type dataBody struct {
@@ -34,45 +24,4 @@ type attributes struct {
 	Delay           uint32 `json:"delay"`
 	FacingDirection byte   `json:"facing_direction"`
 	Alive           bool   `json:"alive"`
-}
-
-func (c *dataContainer) MarshalJSON() ([]byte, error) {
-	t := struct {
-		Data     interface{} `json:"data"`
-		Included interface{} `json:"included"`
-	}{}
-	if len(c.data) == 1 {
-		t.Data = c.data[0]
-	} else {
-		t.Data = c.data
-	}
-	return json.Marshal(t)
-}
-
-func (c *dataContainer) UnmarshalJSON(data []byte) error {
-	d, _, err := response.UnmarshalRoot(data, response.MapperFunc(EmptyData))
-	if err != nil {
-		return err
-	}
-	c.data = d
-	return nil
-}
-
-func (c *dataContainer) Data() *dataBody {
-	if len(c.data) >= 1 {
-		return c.data[0].(*dataBody)
-	}
-	return nil
-}
-
-func (c *dataContainer) DataList() []dataBody {
-	var r = make([]dataBody, 0)
-	for _, x := range c.data {
-		r = append(r, *x.(*dataBody))
-	}
-	return r
-}
-
-func EmptyData() interface{} {
-	return &dataBody{}
 }

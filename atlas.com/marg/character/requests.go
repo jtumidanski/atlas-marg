@@ -3,8 +3,6 @@ package character
 import (
 	"atlas-marg/rest/requests"
 	"fmt"
-	"github.com/opentracing/opentracing-go"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -14,13 +12,6 @@ const (
 	charactersById                 = charactersResource + "/%d"
 )
 
-func requestById(l logrus.FieldLogger, span opentracing.Span) func(characterId uint32) (*DataContainer, error) {
-	return func(characterId uint32) (*DataContainer, error) {
-		ar := &DataContainer{}
-		err := requests.Get(l, span)(fmt.Sprintf(charactersById, characterId), ar)
-		if err != nil {
-			return nil, err
-		}
-		return ar, nil
-	}
+func requestById(characterId uint32) requests.Request[Attributes] {
+	return requests.MakeGetRequest[Attributes](fmt.Sprintf(charactersById, characterId))
 }

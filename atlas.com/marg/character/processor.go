@@ -9,12 +9,13 @@ import (
 
 func GetMapId(l logrus.FieldLogger, span opentracing.Span) func(characterId uint32) (uint32, error) {
 	return func(characterId uint32) (uint32, error) {
-		c, err := requestById(l, span)(characterId)
+		c, err := requestById(characterId)(l, span)
 		if err != nil {
 			l.WithError(err).Errorf("Unable to locate the character.")
 			return 0, err
 		}
-		return c.Data.Attributes.MapId, nil
+		attr := c.Data().Attributes
+		return attr.MapId, nil
 	}
 }
 
