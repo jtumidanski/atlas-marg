@@ -1,6 +1,6 @@
-package models
+package monster
 
-type MonsterSpawnPoint struct {
+type SpawnPoint struct {
 	Id      uint32
 	MobTime uint32
 	Team    int32

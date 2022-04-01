@@ -1,4 +1,4 @@
-package models
+package character
 
 type MapKey struct {
 	WorldId   byte

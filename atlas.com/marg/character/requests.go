@@ -12,6 +12,6 @@ const (
 	charactersById                 = charactersResource + "/%d"
 )
 
-func requestById(characterId uint32) requests.Request[Attributes] {
-	return requests.MakeGetRequest[Attributes](fmt.Sprintf(charactersById, characterId))
+func requestById(characterId uint32) requests.Request[attributes] {
+	return requests.MakeGetRequest[attributes](fmt.Sprintf(charactersById, characterId))
 }

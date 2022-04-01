@@ -1,9 +1,9 @@
 package monster
 
 import (
-	_map "atlas-marg/map"
-	"atlas-marg/models"
+	"atlas-marg/map/character"
 	"atlas-marg/monster"
+	"atlas-marg/rest/requests"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"math"
@@ -13,15 +13,15 @@ import (
 
 func Spawn(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32) {
-		c := len(_map.GetCharacterRegistry().GetInMap(worldId, channelId, mapId))
+		c := len(character.GetRegistry().GetInMap(worldId, channelId, mapId))
 		if c > 0 {
-			sps, err := _map.GetMonsterSpawnPoints(l, span)(mapId)
+			sps, err := GetSpawnPoints(l, span)(mapId)
 			if err != nil {
 				l.WithError(err).Errorf("Unable to get spawn points for map %d.", mapId)
 				return
 			}
 
-			var ableSps []models.MonsterSpawnPoint
+			var ableSps []SpawnPoint
 			for _, x := range sps {
 				if x.MobTime >= 0 {
 					ableSps = append(ableSps, x)
@@ -47,9 +47,9 @@ func Spawn(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, chann
 	}
 }
 
-func shuffle(vals []models.MonsterSpawnPoint) []models.MonsterSpawnPoint {
+func shuffle(vals []SpawnPoint) []SpawnPoint {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	ret := make([]models.MonsterSpawnPoint, len(vals))
+	ret := make([]SpawnPoint, len(vals))
 	perm := r.Perm(len(vals))
 	for i, randIndex := range perm {
 		ret[i] = vals[randIndex]
@@ -60,4 +60,34 @@ func shuffle(vals []models.MonsterSpawnPoint) []models.MonsterSpawnPoint {
 func getMonsterMax(characterCount int, spawnPointCount int) int {
 	spawnRate := 0.70 + (0.05 * math.Min(6, float64(characterCount)))
 	return int(math.Ceil(spawnRate * float64(spawnPointCount)))
+}
+
+func GetSpawnPoints(l logrus.FieldLogger, span opentracing.Span) func(mapId uint32) ([]SpawnPoint, error) {
+	return func(mapId uint32) ([]SpawnPoint, error) {
+		data, err := requestSpawnPoints(mapId)(l, span)
+		if err != nil {
+			return nil, err
+		}
+		var result []SpawnPoint
+		for _, d := range data.DataList() {
+			result = append(result, makeModel(d))
+		}
+		return result, nil
+	}
+}
+
+func makeModel(data requests.DataBody[attributes]) SpawnPoint {
+	attr := data.Attributes
+	return SpawnPoint{
+		Id:      attr.Id,
+		MobTime: attr.MobTime,
+		Team:    attr.Team,
+		Cy:      attr.CY,
+		F:       attr.F,
+		Fh:      attr.FH,
+		Rx0:     attr.RX0,
+		Rx1:     attr.RX1,
+		X:       attr.X,
+		Y:       attr.Y,
+	}
 }

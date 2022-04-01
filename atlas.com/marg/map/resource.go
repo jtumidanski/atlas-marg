@@ -2,6 +2,7 @@ package _map
 
 import (
 	"atlas-marg/json"
+	"atlas-marg/map/character"
 	"atlas-marg/rest"
 	"github.com/gorilla/mux"
 	"github.com/opentracing/opentracing-go"
@@ -61,7 +62,7 @@ func handleGetMapCharacters(l logrus.FieldLogger) func(span opentracing.Span) fu
 				var response CharacterDataListContainer
 				response.Data = make([]CharactersDataBody, 0)
 
-				for _, x := range GetCharacterRegistry().GetInMap(worldId, channelId, mapId) {
+				for _, x := range character.GetRegistry().GetInMap(worldId, channelId, mapId) {
 					var serverData = getMapCharactersResponseObject(x)
 					response.Data = append(response.Data, serverData)
 				}

@@ -1,16 +1,6 @@
 package character
 
-type DataContainer struct {
-	Data DataBody `json:"data"`
-}
-
-type DataBody struct {
-	Id         string     `json:"id"`
-	Type       string     `json:"type"`
-	Attributes Attributes `json:"attributes"`
-}
-
-type Attributes struct {
+type attributes struct {
 	AccountId          int    `json:"accountId"`
 	WorldId            int    `json:"worldId"`
 	Name               string `json:"name"`

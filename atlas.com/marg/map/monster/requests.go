@@ -1,4 +1,4 @@
-package _map
+package monster
 
 import (
 	"atlas-marg/rest/requests"
@@ -12,6 +12,6 @@ const (
 	monstersResource                   = mapsResource + "%d/monsters"
 )
 
-func requestMonsterSpawnPoints(mapId uint32) requests.Request[monsterAttributes] {
-	return requests.MakeGetRequest[monsterAttributes](fmt.Sprintf(monstersResource, mapId))
+func requestSpawnPoints(mapId uint32) requests.Request[attributes] {
+	return requests.MakeGetRequest[attributes](fmt.Sprintf(monstersResource, mapId))
 }

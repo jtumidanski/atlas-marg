@@ -2,21 +2,12 @@ package reactor
 
 import (
 	"atlas-marg/map/reactor"
+	"atlas-marg/model"
 	"atlas-marg/rest/requests"
 	"github.com/opentracing/opentracing-go"
 	"github.com/sirupsen/logrus"
 	"strconv"
 )
-
-type ModelOperator func(*Model)
-
-type ModelListOperator func([]*Model)
-
-type ModelProvider func() (*Model, error)
-
-type ModelListProvider func() ([]*Model, error)
-
-type Filter func(*Model) bool
 
 func SpawnMissing(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32) {
 	return func(worldId byte, channelId byte, mapId uint32) {
@@ -34,8 +25,8 @@ func SpawnMissing(l logrus.FieldLogger, span opentracing.Span) func(worldId byte
 	}
 }
 
-func doesNotExist(existing []*Model) reactor.Filter {
-	return func(reference *reactor.Model) bool {
+func doesNotExist(existing []Model) model.Filter[reactor.Model] {
+	return func(reference reactor.Model) bool {
 		for _, er := range existing {
 			if er.Classification() == reference.Classification() && er.X() == reference.X() && er.Y() == reference.Y() {
 				return false
@@ -45,55 +36,25 @@ func doesNotExist(existing []*Model) reactor.Filter {
 	}
 }
 
-func requestModelListProvider(l logrus.FieldLogger, span opentracing.Span) func(r requests.Request[attributes], filters ...Filter) ModelListProvider {
-	return func(r requests.Request[attributes], filters ...Filter) ModelListProvider {
-		return func() ([]*Model, error) {
-			resp, err := r(l, span)
-			if err != nil {
-				return nil, err
-			}
-
-			ms := make([]*Model, 0)
-			for _, v := range resp.DataList() {
-				m, err := makeModel(v)
-				if err != nil {
-					return nil, err
-				}
-				ok := true
-				for _, filter := range filters {
-					if !filter(m) {
-						ok = false
-						break
-					}
-				}
-				if ok {
-					ms = append(ms, m)
-				}
-			}
-			return ms, nil
-		}
+func InMapModelProvider(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, filters ...model.Filter[Model]) model.SliceProvider[Model] {
+	return func(worldId byte, channelId byte, mapId uint32, filters ...model.Filter[Model]) model.SliceProvider[Model] {
+		return requests.SliceProvider[attributes, Model](l, span)(requestInMap(worldId, channelId, mapId), makeModel, filters...)
 	}
 }
 
-func InMapModelProvider(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, filters ...Filter) ModelListProvider {
-	return func(worldId byte, channelId byte, mapId uint32, filters ...Filter) ModelListProvider {
-		return requestModelListProvider(l, span)(requestInMap(worldId, channelId, mapId), filters...)
-	}
-}
-
-func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, filters ...Filter) ([]*Model, error) {
-	return func(worldId byte, channelId byte, mapId uint32, filters ...Filter) ([]*Model, error) {
+func GetInMap(l logrus.FieldLogger, span opentracing.Span) func(worldId byte, channelId byte, mapId uint32, filters ...model.Filter[Model]) ([]Model, error) {
+	return func(worldId byte, channelId byte, mapId uint32, filters ...model.Filter[Model]) ([]Model, error) {
 		return InMapModelProvider(l, span)(worldId, channelId, mapId, filters...)()
 	}
 }
 
-func makeModel(data requests.DataBody[attributes]) (*Model, error) {
+func makeModel(data requests.DataBody[attributes]) (Model, error) {
 	id, err := strconv.ParseUint(data.Id, 10, 32)
 	if err != nil {
-		return nil, err
+		return Model{}, err
 	}
 	attr := data.Attributes
-	return &Model{
+	return Model{
 		id:             uint32(id),
 		classification: attr.Classification,
 		name:           attr.Name,
