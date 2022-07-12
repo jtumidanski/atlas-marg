@@ -1,6 +1,7 @@
 package main
 
 import (
+	"atlas-marg/cashshop"
 	"atlas-marg/character"
 	"atlas-marg/configurations"
 	"atlas-marg/kafka"
@@ -10,6 +11,7 @@ import (
 	"atlas-marg/tasks"
 	"atlas-marg/tracing"
 	"context"
+	"github.com/opentracing/opentracing-go"
 	"io"
 	"os"
 	"os/signal"
@@ -45,11 +47,16 @@ func main() {
 
 	kafka.CreateConsumers(l, ctx, wg,
 		character.StatusConsumer(consumerGroupId),
-		character.MapChangedConsumer(consumerGroupId))
+		character.MapChangedConsumer(consumerGroupId),
+		cashshop.EntryPollConsumer(serviceName)(consumerGroupId))
 
 	go tasks.Register(tasks.NewRespawn(l, config.RespawnInterval))
 
 	rest.CreateService(l, ctx, wg, "/ms/mrg", _map.InitResource)
+
+	span := opentracing.StartSpan("startup")
+	cashshop.RegisterGatekeeper(l, span)(serviceName)
+	span.Finish()
 
 	// trap sigterm or interrupt and gracefully shutdown the server
 	c := make(chan os.Signal, 1)
@@ -60,5 +67,10 @@ func main() {
 	l.Infof("Initiating shutdown with signal %s.", sig)
 	cancel()
 	wg.Wait()
+
+	span = opentracing.StartSpan("shutdown")
+	cashshop.UnregisterGatekeeper(l, span)(serviceName)
+	span.Finish()
+
 	l.Infoln("Service shutdown.")
 }
